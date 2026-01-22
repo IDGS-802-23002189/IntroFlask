@@ -1,4 +1,5 @@
-from flask import Flask,render_template
+from flask import Flask, render_template, request
+
 
 app = Flask(__name__)
 
@@ -52,6 +53,38 @@ def operas():
         <input type="text" id="apaterno" required>
     </form>
     '''
+
+    
+@app.route("/operasBas")
+def opera1():
+    return render_template("operasBas.html")
+
+@app.route("/resultado", methods=["GET", "POST"])
+def resultado():
+    n1 = float(request.form.get("n1"))
+    n2 = float(request.form.get("n2"))
+    operacion = request.form.get("operacion")
+
+    if operacion == "sumar":
+        resultado = n1 + n2
+        texto = "La suma es"
+    elif operacion == "restar":
+        resultado = n1 - n2
+        texto = "La resta es"
+    elif operacion == "multiplicar":
+        resultado = n1 * n2
+        texto = "La multiplicación es"
+    elif operacion == "dividir":
+        if n2 == 0:
+            return "Error: no se puede dividir entre cero"
+        resultado = n1 / n2
+        texto = "La división es"
+    else:
+        return "Operación no válida"
+
+    return f"{texto}: {resultado}"
+
+
 
 if __name__ == "__main__":
     app.run(debug=True)

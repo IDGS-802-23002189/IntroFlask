@@ -1,14 +1,48 @@
 import math
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect
+from flask import flash
+from flask_wtf.csrf import CSRFProtect
 
+import forms
 
 app = Flask(__name__)
+app.secret_key='Clave secreta'
+csrf=CSRFProtect()
 
 @app.route("/")
 def index():
     titulo="IDGS-802-FLASK"
     lista=['Juan','karla']
     return render_template("index.html",titulo=titulo,lista=lista)
+
+
+@app.route("/usuarios", methods =["GET","POST"])
+def usuarios():
+    mat=0
+    nom=''
+    apa=''
+    ama=''
+    email=''
+    usuarios_class=forms.UserForm(request.form)
+    if request.method=='POST' and usuarios_class.validate():
+        mat=usuarios_class.matricula.data
+        nom=usuarios_class.nombre.data
+        apa=usuarios_class.apaterno.data
+        ama=usuarios_class.amaterno.data
+        email=usuarios_class.correo.data
+
+        mensaje='Bienvenido {}'.format(nom)
+        flash(mensaje)
+        
+    
+    return render_template("usuarios.html",
+                           form=usuarios_class, 
+                           mat = mat,
+                           nom=nom,
+                           apa=apa,
+                           ama=ama,
+                           email=email
+                           )
 
 @app.route("/formularios")
 def formularios():
@@ -56,16 +90,21 @@ def operas():
     '''
 
     
-@app.route("/operasBas", methods =["GET","POST"])
-def operas1():
-    n1=0
-    n2=0
-    res =0
+@app.route("/operasBas", methods=["GET", "POST"])
+def opera1():
+    n1 = 0
+    n2 = 0
+    res = 0
+
     if request.method == "POST":
         n1 = request.form.get("n1")
         n2 = request.form.get("n2")
-        res = float(n1)+float(n2)
-    return render_template("operasBas.html",n1=n1,n2=n2,res=res)
+    return render_template(
+        "operasBas.html",
+        n1=n1,
+        n2=n2,
+        res=res
+    )
 
 
 @app.route("/resultado", methods=["GET", "POST"])
@@ -99,23 +138,63 @@ def alumnos():
     return render_template("alumnos.html")
 
 
-@app.route("/distancia", methods=["GET", "POST"])
-def distancia():
-    resultado = 0
+@app.route("/cinepolis", methods=["GET", "POST"])
+def cine():
+
+    total = 0
+    mensaje = ""
+    costo_boleto = 12
+
+    nombre = ""
+    cantidad_boletos = ""
+    cantidad_compradores = ""
+    tarjetaCineco = "no"
 
     if request.method == "POST":
-        x1 = float(request.form.get("x1"))
-        x2 = float(request.form.get("x2"))
-        y1 = float(request.form.get("y1"))
-        y2 = float(request.form.get("y2"))
 
-        operacion = math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
-        resultado = operacion
+        accion = request.form.get("accion")
 
-    return render_template("distancia.html", resultado=resultado)
+        if accion == "salir":
+            return redirect("/cinepolis")
+
+        if accion == "procesar":
+
+            nombre = request.form.get("nombre")
+            cantidad_boletos = int(request.form.get("cantidad_boletos", 0))
+            cantidad_compradores = int(request.form.get("cantidad_compradores", 0))
+            tarjetaCineco = request.form.get("tarjetaCineco")
+
+            max_boletos = cantidad_compradores * 7
+
+            if cantidad_boletos > max_boletos:
+                mensaje = f"Solo se permiten {max_boletos} boletos para {cantidad_compradores} personas"
+            else:
+                subtotal = cantidad_boletos * costo_boleto
+                descuento = 0
+
+                if cantidad_boletos > 5:
+                    descuento = subtotal * 0.15
+                elif cantidad_boletos >= 3:
+                    descuento = subtotal * 0.10
+
+                total = subtotal - descuento
+
+                if tarjetaCineco == "si":
+                    total -= total * 0.10
+
+                mensaje = "Compra realizada correctamente."
+
+    return render_template(
+        "cinepolisFlask.html",
+        total=total,
+        mensaje=mensaje,
+        nombre=nombre,
+        cantidad_boletos=cantidad_boletos,
+        cantidad_compradores=cantidad_compradores,
+        tarjetaCineco=tarjetaCineco
+    )
 
 
-
-    
 if __name__ == "__main__":
+    csrf.init_app(app)
     app.run(debug=True)

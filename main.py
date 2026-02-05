@@ -2,6 +2,8 @@ import math
 from flask import Flask, render_template, request, redirect
 from flask import flash
 from flask_wtf.csrf import CSRFProtect
+from CinepolisForm import CinepolisForm
+
 
 import forms
 
@@ -138,6 +140,8 @@ def alumnos():
     return render_template("alumnos.html")
 
 
+
+
 @app.route("/cinepolis", methods=["GET", "POST"])
 def cine():
 
@@ -145,12 +149,9 @@ def cine():
     mensaje = ""
     costo_boleto = 12
 
-    nombre = ""
-    cantidad_boletos = ""
-    cantidad_compradores = ""
-    tarjetaCineco = "no"
+    form = CinepolisForm()
 
-    if request.method == "POST":
+    if form.validate_on_submit():
 
         accion = request.form.get("accion")
 
@@ -159,10 +160,10 @@ def cine():
 
         if accion == "procesar":
 
-            nombre = request.form.get("nombre")
-            cantidad_boletos = int(request.form.get("cantidad_boletos", 0))
-            cantidad_compradores = int(request.form.get("cantidad_compradores", 0))
-            tarjetaCineco = request.form.get("tarjetaCineco")
+            nombre = form.nombre.data
+            cantidad_boletos = form.cantidad_boletos.data
+            cantidad_compradores = form.cantidad_compradores.data
+            tarjetaCineco = form.tarjetaCineco.data
 
             max_boletos = cantidad_compradores * 7
 
@@ -186,14 +187,10 @@ def cine():
 
     return render_template(
         "cinepolisFlask.html",
+        form=form,
         total=total,
-        mensaje=mensaje,
-        nombre=nombre,
-        cantidad_boletos=cantidad_boletos,
-        cantidad_compradores=cantidad_compradores,
-        tarjetaCineco=tarjetaCineco
+        mensaje=mensaje
     )
-
 
 if __name__ == "__main__":
     csrf.init_app(app)
